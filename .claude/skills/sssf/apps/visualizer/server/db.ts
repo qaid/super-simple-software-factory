@@ -156,7 +156,14 @@ export class SssfDb {
         `SELECT adw_id, ${this.optionalColumn("sessions", "adw_name")}, request,
                 status, engineer, started_at, ended_at,
                 total_tokens, total_cost,
-                ${this.optionalColumn("sessions", "archived")}
+                ${this.optionalColumn("sessions", "archived")},
+                ${this.optionalColumn("sessions", "issue_number")},
+                ${this.optionalColumn("sessions", "pr_number")},
+                ${this.optionalColumn("sessions", "pr_url")},
+                ${this.optionalColumn("sessions", "pr_state")},
+                ${this.optionalColumn("sessions", "merged_at")},
+                ${this.optionalColumn("sessions", "failure_reason")},
+                ${this.optionalColumn("sessions", "abandoned")}
            FROM sessions
           WHERE COALESCE(${this.hasColumn("sessions", "archived") ? "archived" : "0"}, 0) = 0
           ORDER BY started_at DESC, rowid DESC
@@ -208,7 +215,14 @@ export class SssfDb {
         .query<Session, [string]>(
           `SELECT adw_id, ${this.optionalColumn("sessions", "adw_name")}, request,
                   status, engineer, started_at, ended_at,
-                  total_tokens, total_cost
+                  total_tokens, total_cost,
+                  ${this.optionalColumn("sessions", "issue_number")},
+                  ${this.optionalColumn("sessions", "pr_number")},
+                  ${this.optionalColumn("sessions", "pr_url")},
+                  ${this.optionalColumn("sessions", "pr_state")},
+                  ${this.optionalColumn("sessions", "merged_at")},
+                  ${this.optionalColumn("sessions", "failure_reason")},
+                  ${this.optionalColumn("sessions", "abandoned")}
              FROM sessions WHERE adw_id = ?`,
         )
         .get(adwId) ?? null

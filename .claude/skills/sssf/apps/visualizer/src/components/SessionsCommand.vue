@@ -202,7 +202,8 @@ const maxPhaseMs = computed(() =>
       <section v-if="selected" class="panel">
         <header class="p-head">
           <div class="p-title-row">
-            <!-- TODO(api): no issue_number; chip is a placeholder. -->
+            <!-- issue_number is wired now; falls back to '#?' on rows from
+                 before enrichment started recording it. -->
             <span class="p-chip">{{ issueChip(selected) }}</span>
             <h1 class="p-title">{{ issueTitle(selected) }}</h1>
           </div>

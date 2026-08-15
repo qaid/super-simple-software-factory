@@ -6,7 +6,11 @@
  * session progress and lane layout are computed in the UI, never stored.
  */
 
-/** sessions.status — a run is running until it earns success. */
+/**
+ * sessions.status — a run is running until it earns success. Statuses are
+ * normalized to this vocabulary at write time; older rows may still say
+ * "failed" rather than "fail" (see lifecycleOf's string compare).
+ */
 export type SessionStatus = "running" | "success" | "fail";
 
 /** phases.status — queued only for manifest-declared phases not yet entered. */
@@ -41,6 +45,19 @@ export interface Session {
   total_cost: number | null;
   /** 1 once archived out of the review list. Review state, not run state. */
   archived: number | null;
+  /** The GitHub issue this run implements. Null on dbs predating enrichment. */
+  issue_number: number | null;
+  /** The PR this run opened. Null until enrichment records it. */
+  pr_number: number | null;
+  pr_url: string | null;
+  /** open / draft / merged / closed, as GitHub reports it. */
+  pr_state: string | null;
+  /** Set once the PR merges — the only honest source for a "done" lifecycle. */
+  merged_at: string | null;
+  /** Session-level failure text for runs that die without a failing phase row. */
+  failure_reason: string | null;
+  /** 1 when the run was marked abandoned/stalled rather than a clean pass/fail. */
+  abandoned: number | null;
 }
 
 /**

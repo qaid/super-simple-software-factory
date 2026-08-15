@@ -20,12 +20,13 @@ export function typingInField(): boolean {
 }
 
 // ── Lifecycle ────────────────────────────────────────────────────────────────
-// The critique's point 3: "success" today conflates "PR is open, go review it"
-// with "merged and finished". The API cannot yet tell those apart (see
-// MISSING_API_FIELDS), so a finished run resolves to needs-review and `done`
-// stays reachable-but-unused until the API carries merge state.
+// The critique's point 3: "success" used to conflate "PR is open, go review
+// it" with "merged and finished". merged_at is now wired, so a finished run
+// resolves to `done` once its PR merges and stays at needs-review until then.
+// Older, pre-enrichment rows have no merged_at yet and still land on
+// needs-review, same as before.
 
-export type Lifecycle = 'queued' | 'building' | 'needs-review' | 'attention' | 'failed' | 'done'
+export type Lifecycle = 'queued' | 'building' | 'needs-review' | 'attention' | 'failed' | 'done' | 'abandoned'
 
 export const LIFECYCLE_META: Record<Lifecycle, { label: string; color: string; glyph: string }> = {
   queued: { label: 'queued', color: 'var(--faint)', glyph: '○' },
@@ -34,6 +35,7 @@ export const LIFECYCLE_META: Record<Lifecycle, { label: string; color: string; g
   attention: { label: 'stalled', color: 'var(--purple)', glyph: '!' },
   failed: { label: 'failed', color: 'var(--red)', glyph: '✕' },
   done: { label: 'done', color: 'var(--green)', glyph: '✓' },
+  abandoned: { label: 'abandoned', color: 'var(--purple)', glyph: '!' },
 }
 
 /** Both "fail" and "failed" appear in real rows; normalize once. */
@@ -42,27 +44,31 @@ export function lifecycleOf(s: SessionSummary): Lifecycle {
   // plain string rather than trusting the type.
   const status = String(s.status ?? '')
   const openPhase = (s.phases ?? []).some((p) => String(p.status ?? '') === 'running')
+  // The tracer now flags abandoned runs explicitly rather than leaving this
+  // view to infer it from an open phase on a failed status.
+  if (s.abandoned === 1) return 'abandoned'
   if (status === 'fail' || status === 'failed' || status === 'error') {
-    // Real data contains rows marked failed whose last phase is still "running"
-    // with no ended_at: an abandoned run, not a clean failure. Calling that
-    // "failed" hides the fact that nothing ever reported back, so it gets its
-    // own state instead.
+    // Older, unflagged rows: a run marked failed whose last phase is still
+    // "running" with no ended_at is an abandoned run, not a clean failure.
     return openPhase ? 'attention' : 'failed'
   }
   if (status === 'running') {
     const started = (s.phases ?? []).some((p) => p.kind === 'agent' && p.started_at)
     return started ? 'building' : 'queued'
   }
-  // TODO(api): a merged run should resolve to 'done'. Without pr_state/merged
-  // in the payload every finished run lands on needs-review.
-  if (status === 'success') return 'needs-review'
+  if (status === 'success') {
+    // merged_at is the only honest source for "done"; an open or unmerged PR
+    // still needs a human to look at it.
+    if (s.merged_at) return 'done'
+    return 'needs-review'
+  }
   return 'queued'
 }
 
 /** Runs the human is blocking on: finished and unreviewed, or broken. */
 export function needsYou(s: SessionSummary): boolean {
   const l = lifecycleOf(s)
-  return l === 'needs-review' || l === 'failed' || l === 'attention'
+  return l === 'needs-review' || l === 'failed' || l === 'attention' || l === 'abandoned'
 }
 
 // ── Issue identity ───────────────────────────────────────────────────────────
@@ -74,23 +80,24 @@ export function issueTitle(s: SessionSummary): string {
 }
 
 /**
- * TODO(api): there is no issue_number field. Numbers that appear inside the
- * request body are references to OTHER issues (e.g. "found while fixing #1519"),
- * so scraping them would label runs with the wrong issue. Render a placeholder
- * rather than invent one.
+ * The issue chip. issue_number comes straight from the API now; numbers found
+ * inside the request body are references to OTHER issues (e.g. "found while
+ * fixing #1519"), so those are never scraped. Older, pre-enrichment rows have
+ * no issue_number yet, so they still render the placeholder.
  */
-export function issueChip(_s: SessionSummary): string {
-  return '#?'
+export function issueChip(s: SessionSummary): string {
+  return s.issue_number != null ? `#${s.issue_number}` : '#?'
 }
 
 /**
- * TODO(api): no pr_number / pr_state / merged_at. The row renders as a
- * placeholder so the design is honest about the gap.
+ * The PR label. pr_number is real once the API carries it; older rows fall
+ * back to the placeholder so the gap stays visible instead of inventing one.
  */
 export function prLabel(s: SessionSummary): string | null {
   // Only a run that actually finished can have a PR to review.
   const life = lifecycleOf(s)
-  return life === 'needs-review' || life === 'done' ? 'PR ?' : null
+  if (life !== 'needs-review' && life !== 'done') return null
+  return s.pr_number != null ? `PR #${s.pr_number}` : 'PR ?'
 }
 
 // ── Failure surfacing ────────────────────────────────────────────────────────
@@ -106,14 +113,16 @@ export interface FailureInfo {
 
 export function failureOf(s: SessionSummary): FailureInfo | null {
   const life = lifecycleOf(s)
-  if (life !== 'failed' && life !== 'attention') return null
+  if (life !== 'failed' && life !== 'attention' && life !== 'abandoned') return null
   const phases = s.phases ?? []
-  if (life === 'attention') {
+  if (life === 'attention' || life === 'abandoned') {
     const open = phases.find((p) => String(p.status ?? '') === 'running')
     return {
       who: open?.owner || 'unknown',
       phase: open?.name ?? 'n/a',
-      line: 'run marked failed while this phase is still open; no result reported',
+      line:
+        s.failure_reason ||
+        'run marked failed while this phase is still open; no result reported',
     }
   }
   const bad = phases.find((p) => {
@@ -125,20 +134,24 @@ export function failureOf(s: SessionSummary): FailureInfo | null {
     return {
       who: bad.owner || bad.kind || 'unknown',
       phase: bad.name ?? 'n/a',
-      line: line || 'no error text recorded',
+      line: line || s.failure_reason || 'no error text recorded',
     }
   }
   // A run marked failed whose phases carry no failure row: the last phase that
-  // started is the honest best guess at where it died.
+  // started is the honest best guess at where it died. failure_reason, when
+  // the API set it, beats the generic fallback line.
   const last = phases.filter((p) => p.started_at).at(-1)
-  if (!last) return { who: 'unknown', phase: 'n/a', line: 'run failed before any phase ran' }
+  if (!last) {
+    return {
+      who: 'unknown',
+      phase: 'n/a',
+      line: s.failure_reason || 'run failed before any phase ran',
+    }
+  }
   return {
     who: last.owner || last.kind || 'unknown',
     phase: last.name ?? 'n/a',
-    // TODO(api): a run killed mid-phase has status "failed" but no phase error
-    // row, so there is no error text to show. Needs a session-level failure
-    // reason from the API.
-    line: 'run ended during this phase; no error text recorded',
+    line: s.failure_reason || 'run ended during this phase; no error text recorded',
   }
 }
 
@@ -251,17 +264,17 @@ export function rankedOrder(sessions: SessionSummary[]): SessionSummary[] {
  * Fields the API does not expose that this view needs. Surfaced behind the
  * footer "data gaps" link so the gap stays visible instead of being quietly
  * papered over with invented values.
+ *
+ * issue_number, pr_number/pr_url/pr_state, merged_at, failure_reason and
+ * abandoned are now wired (server/db.ts selects them, tolerating their absence
+ * on pre-enrichment dbs). Older runs written before enrichment still have NULL
+ * here, which is why '#?' / 'PR ?' placeholders can still appear.
  */
 export const MISSING_API_FIELDS = [
-  'issue_number: the GitHub issue this run implements (body-scraped numbers are references to other issues)',
-  'issue_url: to link the chip through to GitHub',
-  'pr_number / pr_url: the PR the run opened',
-  'pr_state: open / draft / merged / closed, so needs-review and done stop being the same status',
-  'merged_at: the only honest source for a "done" lifecycle state',
+  'issue_url: to link the chip through to GitHub (issue_number itself is wired)',
   'review_state: approved / changes-requested, for a real "needs you" queue',
-  'failure_reason: a session-level error for runs that die without a failing phase row',
   'branch / worktree path: to jump from a card to the code',
   'attempt_of: an explicit parent run id, so retries group without matching on title text',
   'CONTRACT BUG: shared/types.ts declares SessionStatus as running|success|fail, but the API returns "failed" too (run d6337127). Both spellings are live; the type lies.',
-  'CONTRACT BUG: run d6337127 has status "failed" with its build phase still "running" and ended_at null. Nothing distinguishes an abandoned run from a clean failure, so this view infers a "stalled" state instead.',
+  'CONTRACT BUG: run d6337127 has status "failed" with its build phase still "running" and ended_at null on a db from before the abandoned column existed; unflagged old rows like it still fall back to this view inferring a "stalled" state.',
 ]
