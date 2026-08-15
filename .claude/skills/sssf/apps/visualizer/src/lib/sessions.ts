@@ -227,24 +227,24 @@ export function costOutlierThreshold(sessions: SessionSummary[]): number {
 
 // ── Ordering ────────────────────────────────────────────────────────────────
 
+/** Newest start time first; runs with no started_at sort to the end. */
 export function newestFirst(sessions: SessionSummary[]): SessionSummary[] {
-  return sessions.toSorted((a, b) => (ts(b.started_at) || 0) - (ts(a.started_at) || 0))
+  return sessions.toSorted((a, b) => {
+    const ta = ts(a.started_at)
+    const tb = ts(b.started_at)
+    const va = Number.isFinite(ta) ? (ta as number) : -Infinity
+    const vb = Number.isFinite(tb) ? (tb as number) : -Infinity
+    return vb - va
+  })
 }
 
-const RANK: Record<Lifecycle, number> = {
-  attention: 0,
-  failed: 1,
-  'needs-review': 2,
-  building: 3,
-  queued: 4,
-  done: 5,
-}
-
-/** Needs-you first, then running, then the rest; newest inside each band. */
+/**
+ * Plain reverse-chronological order by start time, regardless of lifecycle.
+ * Lifecycle pills/colors and needs-you row treatment still apply per-row; this
+ * only controls list position. Runs without started_at sort last.
+ */
 export function rankedOrder(sessions: SessionSummary[]): SessionSummary[] {
-  return newestFirst(sessions).toSorted(
-    (a, b) => RANK[lifecycleOf(a)] - RANK[lifecycleOf(b)],
-  )
+  return newestFirst(sessions)
 }
 
 /**

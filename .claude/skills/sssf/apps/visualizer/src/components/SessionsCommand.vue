@@ -1,8 +1,9 @@
 <script setup lang="ts">
 // The sessions view: a command center.
 //
-// Split layout. Left is a narrow ranked list (needs-you first) with tiny status
-// glyphs; right is one large detail panel for the selected run: full title,
+// Split layout. Left is a narrow reverse-chronological list (most recent run
+// first) with tiny status glyphs and needs-you highlighting; right is one
+// large detail panel for the selected run: full title,
 // every phase with duration and routed model, error block, PR row. j/k moves
 // the selection.
 //
