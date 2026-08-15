@@ -99,8 +99,11 @@ watchEffect(() => {
 
 // ── Lanes ────────────────────────────────────────────────────────────────────
 
-const ENGINEER_COLOR = '#e8b64a'
-const CODE_COLOR = '#5ad2dd'
+// Literal hex, not a token: these feed hexAlpha(), which parses the string and
+// returns "transparent" for anything that is not a 6-digit hex. Mid-lightness
+// values chosen to stay legible on both the light and the dark ground.
+const ENGINEER_COLOR = '#c2851a'
+const CODE_COLOR = '#2e8f9c'
 
 const KIND_ICONS = { engineer: UserRound, code: SquareTerminal, agent: Bot }
 
@@ -354,7 +357,7 @@ function blockStyle(p: Phase, lane: Lane): Record<string, string> | undefined {
     left: geom.left,
     width: geom.width,
     background: `linear-gradient(180deg, ${hexAlpha(lane.color, 0.2)}, ${hexAlpha(lane.color, 0.05)})`,
-    borderColor: p.status === 'fail' ? 'rgba(255, 111, 103, 0.8)' : hexAlpha(lane.color, 0.55),
+    borderColor: p.status === 'fail' ? 'var(--red)' : hexAlpha(lane.color, 0.55),
     '--lane-glow': hexAlpha(lane.color, 0.28),
   }
 }
@@ -428,7 +431,7 @@ function selectPhase(p: Phase) {
 
 <template>
   <div class="trace">
-    <div v-if="apiError" class="error-bar">api unreachable — retrying {{ apiError }}</div>
+    <div v-if="apiError" class="error-bar">api unreachable, retrying {{ apiError }}</div>
 
     <div v-if="session" class="run-strip">
       <span class="request" :title="session.request ?? ''">{{ session.request }}</span>
@@ -499,7 +502,7 @@ function selectPhase(p: Phase) {
               class="block"
               :class="[p.status, { selected: p.phase_id === phaseId }]"
               :style="blockStyle(p, lane)"
-              :title="`${p.name} — ${p.status}${p.description ? `\n${p.description}` : ''}`"
+              :title="`${p.name}: ${p.status}${p.description ? `\n${p.description}` : ''}`"
               @click="selectPhase(p)"
             >
               <span class="b-top">
@@ -531,7 +534,7 @@ function selectPhase(p: Phase) {
             class="block queued"
             :class="{ selected: p.phase_id === phaseId }"
             :style="{ right: `${10 + i * 5}px`, width: '170px' }"
-            :title="`${p.name} — queued`"
+            :title="`${p.name}: queued`"
             @click="selectPhase(p)"
           >
             <span class="b-top">
@@ -711,7 +714,7 @@ function selectPhase(p: Phase) {
 .ctx-bar {
   height: 6px;
   border-radius: 999px;
-  background: rgba(6, 8, 15, 0.75);
+  background: var(--panel);
   border: 1px solid var(--border-soft);
   overflow: hidden;
 }
@@ -748,7 +751,7 @@ function selectPhase(p: Phase) {
   position: absolute;
   top: 0;
   bottom: 0;
-  border-left: 1px dashed rgba(174, 191, 212, 0.14);
+  border-left: 1px dashed var(--border-soft);
 }
 
 .block {
@@ -772,7 +775,7 @@ function selectPhase(p: Phase) {
 }
 
 .block:hover {
-  box-shadow: 0 0 18px var(--lane-glow, rgba(108, 182, 255, 0.2));
+  box-shadow: 0 0 18px var(--lane-glow, transparent);
 }
 
 .b-top {
@@ -838,7 +841,7 @@ function selectPhase(p: Phase) {
 .block.selected {
   outline: 2px solid var(--blue);
   outline-offset: 2px;
-  box-shadow: 0 0 22px var(--lane-glow, rgba(108, 182, 255, 0.25));
+  box-shadow: 0 0 22px var(--lane-glow, transparent);
 }
 
 .tool-tick {

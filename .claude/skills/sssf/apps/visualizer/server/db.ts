@@ -261,7 +261,27 @@ export class SssfDb {
           ORDER BY created_at, agent`,
       )
       .all(...adwIds);
-    for (const row of completed) append(row.adw_id, row);
+
+    // Routed-model override: pi records only the configured id (openrouter/auto),
+    // but the enrichment pass (sssf-enrich.py) stores the models OpenRouter
+    // actually routed each generation to. When that table exists, the lane shows
+    // the real workers; an agent that routed to several models shows them all.
+    const routed = new Map<string, string>();
+    if (this.hasColumn("generations", "model")) {
+      const rows = this.db
+        .query<{ adw_id: string; agent: string; models: string | null }, string[]>(
+          `SELECT adw_id, agent, GROUP_CONCAT(DISTINCT model) AS models
+             FROM generations WHERE adw_id IN (${placeholders})
+            GROUP BY adw_id, agent`,
+        )
+        .all(...adwIds);
+      for (const r of rows) if (r.models) routed.set(`${r.adw_id}|${r.agent}`, r.models);
+    }
+    for (const row of completed) {
+      const m = routed.get(`${row.adw_id}|${row.agent}`);
+      if (m) row.model = m;
+      append(row.adw_id, row);
+    }
 
     const started = this.db
       .query<

@@ -112,7 +112,7 @@ const phaseUsage = computed<{ rows: UsageRow[]; partial: boolean } | null>(() =>
       tokens: u.reasoning_tokens,
       cost: share,
       kind: 'nested',
-      title: 'Thinking tokens — part of output above, billed at the output rate. Not added to the total.',
+      title: 'Thinking tokens: part of output above, billed at the output rate. Not added to the total.',
     })
   }
   rows.push(
@@ -353,11 +353,11 @@ function togglePanel(id: string) {
       <div class="d-tags">
         <span class="tag">
           <span class="tag-k">owner</span>
-          <span class="tag-v">{{ phase.owner ?? '—' }}</span>
+          <span class="tag-v">{{ phase.owner ?? 'n/a' }}</span>
         </span>
         <span class="tag">
           <span class="tag-k">kind</span>
-          <span class="tag-v">{{ phase.kind ?? '—' }}</span>
+          <span class="tag-v">{{ phase.kind ?? 'n/a' }}</span>
         </span>
         <span class="tag">
           <span class="tag-k">attempt</span>
@@ -597,7 +597,7 @@ function togglePanel(id: string) {
               <span class="output-type">{{ env.output_type }}</span>
               <span class="tag">
                 <span class="tag-k">agent</span>
-                <span class="tag-v">{{ env.agent ?? '—' }}</span>
+                <span class="tag-v">{{ env.agent ?? 'n/a' }}</span>
               </span>
               <span class="tag">
                 <span class="tag-k">attempt</span>
@@ -657,7 +657,7 @@ function togglePanel(id: string) {
               </template>
             </template>
             <template v-else-if="e.type === 'tool_call' && e.payload_json">
-              <div class="faint">no detail available — legacy event payload</div>
+              <div class="faint">no detail available, legacy event payload</div>
               <pre class="p-pre" v-html="highlightJson(e.payload_json)" />
             </template>
             <template v-else-if="e.payload_json">
@@ -805,7 +805,7 @@ function togglePanel(id: string) {
   padding: 2px 12px;
   border: 1px solid var(--border-soft);
   border-radius: 999px;
-  background: rgba(19, 26, 38, 0.6);
+  background: var(--panel-2);
   font-family: var(--mono);
   font-size: 16px;
   overflow-wrap: anywhere;
@@ -1020,7 +1020,7 @@ h3:first-child {
 }
 
 .tag-fail {
-  border-color: rgba(255, 111, 103, 0.55);
+  border-color: var(--red);
 }
 
 .tag-fail .tag-v {
@@ -1238,7 +1238,7 @@ h3:first-child {
   border: 1px solid var(--border-soft);
   border-radius: 8px;
   padding: 10px 12px;
-  background: rgba(6, 8, 15, 0.55);
+  background: var(--panel-2);
   max-height: 42vh;
   overflow: auto;
 }

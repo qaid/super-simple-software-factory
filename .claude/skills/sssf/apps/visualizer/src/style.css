@@ -1,26 +1,209 @@
+/* ============================================================================
+   SSSF Visualizer theme tokens.
+
+   Sourced from the ScopeMatch brand guide (docs/scopematch-brand-guide.html),
+   DASHBOARD column of its "Public vs. Dashboard Identity" table. The guide runs
+   two deliberate systems: warm public site (Space Grotesk, terracotta, 2px
+   radii) and cool dashboard (DM Sans + DM Mono, #3b6dff, 9-18px radii). This
+   app is a dense read-only tool, so it takes the dashboard system; the guide
+   explicitly forbids Space Grotesk and public-site radii on dashboard surfaces.
+
+   Light palette is built from the guide's own light tokens (cool gray page,
+   pure white cards); dark is built from the guide's cool dark anchor #0f1117.
+   Neither is an inversion of the other.
+
+   Every palette defines the SAME token names, so components never reference a
+   raw color. Three theme states: no data-theme attribute follows the system via
+   prefers-color-scheme; data-theme="light" / "dark" force a palette.
+   ========================================================================== */
+
+@import '@fontsource/dm-sans/400.css';
+@import '@fontsource/dm-sans/500.css';
+@import '@fontsource/dm-sans/600.css';
+@import '@fontsource/dm-sans/700.css';
+@import '@fontsource/dm-mono/400.css';
+@import '@fontsource/dm-mono/500.css';
+
 :root {
-  --bg: #06080f;
-  --panel: #0d1119;
-  --panel-2: #131a26;
-  --panel-3: #0a0e16;
-  --border: #232c3d;
-  --border-soft: #222b3d;
-  --text: #f2f5fa;
-  --dim: #aabdd5;
-  --faint: #8b9cb6;
-  --green: #4ade80;
-  --red: #ff6f67;
-  --blue: #6cb6ff;
-  --amber: #e8b64a;
-  --purple: #c89bff;
-  --cyan: #5ad2dd;
-  --violet: #94a3ff;
-  /* Play carries the UI voice; mono is reserved for data (ids, times, code). */
-  --sans: 'Play', 'Helvetica Neue', system-ui, sans-serif;
-  --mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Monaco, 'Cascadia Mono',
-    'Roboto Mono', monospace;
-  /* Surface gradient shared by cards and panels — one recipe, everywhere. */
-  --surface: linear-gradient(180deg, #10141f 0%, #0b0f18 100%);
+  /* Guide, dashboard row: "DM Sans + DM Mono". */
+  --sans: 'DM Sans', system-ui, -apple-system, 'Helvetica Neue', sans-serif;
+  --mono: 'DM Mono', ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace;
+
+  /* Guide, "Radii and Edges" dashboard exception: 9px / 13px / 18px. */
+  --radius-sm: 9px;
+  --radius-md: 13px;
+  --radius-lg: 18px;
+  --radius-pill: 999px;
+
+  /* Guide, "Spacing Scale": 4px base. */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  /* ── LIGHT PALETTE (default) ──────────────────────────────────────────────
+     Guide dashboard column: cool gray page surface, pure white cards, #3b6dff
+     primary. Text neutrals keep the guide's warm-undertone recipe at hue 30,
+     which reads as "barely warm" against the cool surfaces and preserves the
+     documented contrast ratios (15.5:1 / 6.1:1 primary/secondary on card). */
+  --bg: #eef0f4;
+  --panel: #ffffff;
+  --panel-2: #f4f6fa;
+  --panel-3: #e9ecf2;
+  --border: hsl(222, 14%, 80%);
+  --border-soft: hsl(222, 14%, 88%);
+  --text: hsl(30, 10%, 14%);
+  --dim: hsl(30, 6%, 38%);
+  --faint: hsl(30, 5%, 46%);
+
+  /* Brand accents. --primary is the dashboard primary from the guide's
+     identity-split table; --data is the shared data-blue accent, which the
+     guide reserves for measurement and quantification (costs, tokens, counts). */
+  --primary: #3b6dff;
+  --primary-hover: #2a55d8;
+  --data: hsl(212, 55%, 42%);
+
+  /* Lifecycle palette. DELIBERATE BORROW: the guide reserves its semantic
+     status trio "exclusively for accreditation status" inside the ScopeMatch
+     product. This is a sibling internal tool with no accreditation data, so the
+     trio is reused for run lifecycle, where the same green/amber/red semantics
+     apply. Values are the guide's, with one legibility note below on amber. */
+  --green: hsl(152, 48%, 32%); /* --color-status-active, verbatim */
+  /* DEVIATION: the guide's suspended amber is hsl(38, 80%, 48%), which is a
+     fill color and only reaches ~2.6:1 as text on white. Used here as pill and
+     label text, so lightness drops to 38% for a passing ratio; hue and
+     saturation are the guide's. */
+  --amber: hsl(38, 80%, 38%);
+  --red: hsl(4, 55%, 45%); /* --color-status-withdrawn, verbatim */
+  --blue: var(--data);
+  --purple: hsl(270, 45%, 45%);
+  --cyan: hsl(190, 60%, 32%);
+  --violet: #3b6dff;
+
+  /* Tint backgrounds behind pills, from the guide's *-bg status tokens. */
+  --green-bg: hsl(152, 40%, 93%);
+  --amber-bg: hsl(38, 70%, 93%);
+  --red-bg: hsl(4, 50%, 94%);
+  --blue-bg: hsl(212, 55%, 95%);
+  --purple-bg: hsl(270, 45%, 95%);
+  --faint-bg: hsl(222, 14%, 93%);
+
+  /* Selection wash and the surface recipe shared by cards and panels. */
+  --sel: rgba(59, 109, 255, 0.1);
+  --hover: rgba(59, 109, 255, 0.05);
+  --surface: linear-gradient(180deg, #ffffff 0%, #f7f9fc 100%);
+  --track: rgba(15, 17, 23, 0.08);
+  --err-text: hsl(4, 60%, 32%);
+  --code-text: hsl(222, 20%, 25%);
+
+  /* Guide, "Elevation": warm-tinted shadows, used sparingly. */
+  --shadow-sm: 0 1px 2px hsla(30, 10%, 20%, 0.06);
+  --shadow-md: 0 4px 12px hsla(30, 10%, 20%, 0.08);
+
+  color-scheme: light;
+}
+
+/* ── DARK PALETTE ───────────────────────────────────────────────────────────
+   Guide, identity-split table: dashboard dark mode is "Cool dark (#0f1117)".
+
+   DEVIATION (brand vs legibility): the guide's semantic status colors are
+   specified at lightness levels computed for contrast on WHITE (green 32%,
+   red 45%). On #0f1117 those same values fall well under 4.5:1 and the pills
+   become unreadable. Hue and saturation are preserved so the colors stay
+   recognisably the brand's; lightness is raised 20-30 points per color to
+   clear contrast on the dark ground. This is a legibility override, taken
+   knowingly, and it is the only place the dark palette departs from the
+   guide's literal values. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #0f1117;
+    --panel: #171a22;
+    --panel-2: #1d212b;
+    --panel-3: #12151c;
+    --border: hsl(222, 12%, 28%);
+    --border-soft: hsl(222, 12%, 22%);
+    --text: hsl(222, 20%, 96%);
+    --dim: hsl(222, 14%, 74%);
+    --faint: hsl(222, 12%, 60%);
+
+    --primary: #7b9cff;
+    --primary-hover: #a0b8ff;
+    --data: hsl(212, 75%, 70%);
+
+    --green: hsl(152, 55%, 58%);
+    --amber: hsl(38, 85%, 62%);
+    --red: hsl(4, 80%, 68%);
+    --blue: var(--data);
+    --purple: hsl(270, 70%, 76%);
+    --cyan: hsl(190, 65%, 62%);
+    --violet: #7b9cff;
+
+    --green-bg: hsla(152, 55%, 58%, 0.14);
+    --amber-bg: hsla(38, 85%, 62%, 0.14);
+    --red-bg: hsla(4, 80%, 68%, 0.14);
+    --blue-bg: hsla(212, 75%, 70%, 0.14);
+    --purple-bg: hsla(270, 70%, 76%, 0.14);
+    --faint-bg: hsla(222, 12%, 60%, 0.1);
+
+    --sel: rgba(123, 156, 255, 0.16);
+    --hover: rgba(123, 156, 255, 0.08);
+    --surface: linear-gradient(180deg, #191d26 0%, #14171f 100%);
+    --track: rgba(255, 255, 255, 0.07);
+    --err-text: hsl(4, 80%, 82%);
+    --code-text: hsl(222, 18%, 84%);
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.5);
+
+    color-scheme: dark;
+  }
+}
+
+/* Explicit dark choice wins in both directions, so the toggle works from a
+   light-preferring system too. Same values as the media block above. */
+:root[data-theme='dark'] {
+  --bg: #0f1117;
+  --panel: #171a22;
+  --panel-2: #1d212b;
+  --panel-3: #12151c;
+  --border: hsl(222, 12%, 28%);
+  --border-soft: hsl(222, 12%, 22%);
+  --text: hsl(222, 20%, 96%);
+  --dim: hsl(222, 14%, 74%);
+  --faint: hsl(222, 12%, 60%);
+
+  --primary: #7b9cff;
+  --primary-hover: #a0b8ff;
+  --data: hsl(212, 75%, 70%);
+
+  --green: hsl(152, 55%, 58%);
+  --amber: hsl(38, 85%, 62%);
+  --red: hsl(4, 80%, 68%);
+  --blue: var(--data);
+  --purple: hsl(270, 70%, 76%);
+  --cyan: hsl(190, 65%, 62%);
+  --violet: #7b9cff;
+
+  --green-bg: hsla(152, 55%, 58%, 0.14);
+  --amber-bg: hsla(38, 85%, 62%, 0.14);
+  --red-bg: hsla(4, 80%, 68%, 0.14);
+  --blue-bg: hsla(212, 75%, 70%, 0.14);
+  --purple-bg: hsla(270, 70%, 76%, 0.14);
+  --faint-bg: hsla(222, 12%, 60%, 0.1);
+
+  --sel: rgba(123, 156, 255, 0.16);
+  --hover: rgba(123, 156, 255, 0.08);
+  --surface: linear-gradient(180deg, #191d26 0%, #14171f 100%);
+  --track: rgba(255, 255, 255, 0.07);
+  --err-text: hsl(4, 80%, 82%);
+  --code-text: hsl(222, 18%, 84%);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.5);
+
+  color-scheme: dark;
 }
 
 * {
@@ -34,17 +217,16 @@ body {
 }
 
 body {
-  /* Deep space with a faint violet/cyan aurora — fixed so scrolling glides over it. */
-  background:
-    radial-gradient(1100px 700px at 8% -10%, rgba(148, 163, 255, 0.09), transparent 62%),
-    radial-gradient(1000px 720px at 102% 108%, rgba(90, 210, 221, 0.07), transparent 60%),
-    linear-gradient(180deg, #06080f 0%, #090d17 100%);
-  background-attachment: fixed;
+  background: var(--bg);
   color: var(--text);
   font-family: var(--sans);
-  /* Readability floor: nothing in the app renders below 16px. */
+  /* DEVIATION: the guide's public type scale anchors body at 1.25rem/20px,
+     which is a marketing-page size; a dense run table at 20px would fit half
+     the rows. The guide's dashboard column sets no scale of its own, so this
+     uses a 16px base with 13px metadata, keeping the guide's ratios. */
   font-size: 16px;
   line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
 }
 
 #app {
@@ -52,8 +234,12 @@ body {
 }
 
 a {
-  color: var(--blue);
+  color: var(--primary);
   text-decoration: none;
+}
+
+a:hover {
+  color: var(--primary-hover);
 }
 
 pre {
@@ -61,17 +247,17 @@ pre {
   padding: 12px 14px;
   background: var(--panel-3);
   border: 1px solid var(--border-soft);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   overflow-x: auto;
   font-family: var(--mono);
-  font-size: 16px;
+  font-size: 14px;
   line-height: 1.55;
-  color: #cfdded;
+  color: var(--code-text);
   white-space: pre-wrap;
   word-break: break-word;
 }
 
-/* JSON token colors — spans emitted by lib/highlight.ts */
+/* JSON token colors: spans emitted by lib/highlight.ts */
 .j-key {
   color: var(--purple);
 }
@@ -81,7 +267,7 @@ pre {
 }
 
 .j-num {
-  color: var(--amber);
+  color: var(--data);
 }
 
 .j-bool {
@@ -103,11 +289,11 @@ pre {
 .error-bar {
   margin: 12px 24px;
   padding: 10px 14px;
-  border: 1px solid rgba(255, 111, 103, 0.5);
-  background: rgba(255, 111, 103, 0.1);
-  color: var(--red);
-  border-radius: 8px;
-  font-size: 16px;
+  border: 1px solid var(--red);
+  background: var(--red-bg);
+  color: var(--err-text);
+  border-radius: var(--radius-sm);
+  font-size: 15px;
 }
 
 .empty-state {
@@ -117,10 +303,10 @@ pre {
   font-size: 16px;
 }
 
-/* Rendered-markdown blocks (compiled prompts) — global because the content is
-   injected via v-html and scoped styles can't reach it. */
+/* Rendered-markdown blocks (compiled prompts): global because the content is
+   injected via v-html and scoped styles cannot reach it. */
 .md {
-  font-size: 16px;
+  font-size: 15px;
   line-height: 1.6;
   color: var(--text);
 }
@@ -137,7 +323,7 @@ pre {
 
 .md h3,
 .md h4 {
-  font-size: 17px;
+  font-size: 16px;
   margin: 12px 0 6px;
 }
 
@@ -155,9 +341,10 @@ pre {
 .md code {
   background: var(--panel-2);
   border: 1px solid var(--border-soft);
-  border-radius: 4px;
+  border-radius: 5px;
   padding: 1px 7px;
-  font-size: 16px;
+  font-family: var(--mono);
+  font-size: 14px;
 }
 
 .md pre.md-code {
@@ -202,5 +389,14 @@ pre {
   }
   50% {
     opacity: 0.35;
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
   }
 }

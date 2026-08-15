@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { useRoute, hrefFor, phaseCrumb } from './lib/router'
-import SessionsList from './components/SessionsList.vue'
 import SessionTrace from './components/SessionTrace.vue'
+import SessionsCommand from './components/SessionsCommand.vue'
+import ThemeToggle from './components/ThemeToggle.vue'
 
 const route = useRoute()
 </script>
@@ -13,9 +14,9 @@ const route = useRoute()
         <!-- Inline copy of public/logo.svg (the favicon) so the mark renders
              crisply with no fetch; keep the two in sync. -->
         <svg class="logo" viewBox="0 0 32 32" aria-hidden="true">
-          <rect x="4" y="6" width="17" height="5" rx="2.5" fill="#e8b64a" />
-          <rect x="8" y="13.5" width="20" height="5" rx="2.5" fill="#c89bff" />
-          <rect x="4" y="21" width="13" height="5" rx="2.5" fill="#5ad2dd" />
+          <rect x="4" y="6" width="17" height="5" rx="2.5" fill="currentColor" opacity="0.55" />
+          <rect x="8" y="13.5" width="20" height="5" rx="2.5" fill="currentColor" />
+          <rect x="4" y="21" width="13" height="5" rx="2.5" fill="currentColor" opacity="0.75" />
         </svg>
         <span class="brand">Super Simple Software Factory</span>
         <span class="sep">›</span>
@@ -31,10 +32,13 @@ const route = useRoute()
           <span class="current">{{ phaseCrumb ?? route.phaseId }}</span>
         </template>
       </nav>
-      <span class="live-hint"><span class="live-dot" /> live</span>
+      <div class="chrome">
+        <span class="live-hint"><span class="live-dot" /> live</span>
+        <ThemeToggle />
+      </div>
     </header>
     <main>
-      <SessionsList v-if="!route.adwId" />
+      <SessionsCommand v-if="!route.adwId" />
       <SessionTrace v-else :key="route.adwId" :adw-id="route.adwId" :phase-id="route.phaseId" />
     </main>
   </div>
@@ -45,53 +49,41 @@ const route = useRoute()
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 15px 28px;
-  background: rgba(11, 15, 24, 0.72);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  gap: 16px;
+  padding: 11px 24px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border-soft);
   position: sticky;
   top: 0;
   z-index: 10;
-}
-
-/* Gradient hairline instead of a hard border — the brand colors, whispered. */
-.topbar::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 1px;
-  background: linear-gradient(
-    90deg,
-    rgba(200, 155, 255, 0.45),
-    rgba(90, 210, 221, 0.35) 40%,
-    rgba(90, 210, 221, 0.06)
-  );
 }
 
 .crumbs {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 17px;
+  font-size: 15px;
   min-width: 0;
 }
 
-.logo {
-  width: 28px;
-  height: 28px;
+.chrome {
+  display: flex;
+  align-items: center;
+  gap: 14px;
   flex: none;
-  filter: drop-shadow(0 0 8px rgba(200, 155, 255, 0.35));
+}
+
+.logo {
+  width: 26px;
+  height: 26px;
+  flex: none;
+  color: var(--primary);
 }
 
 .brand {
-  background: linear-gradient(90deg, var(--purple), var(--cyan));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: var(--text);
   font-weight: 700;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.01em;
   white-space: nowrap;
 }
 
@@ -109,23 +101,23 @@ const route = useRoute()
 
 .crumbs .current {
   color: var(--text);
+  font-weight: 500;
 }
 
 .live-hint {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  color: var(--dim);
-  font-size: 16px;
+  gap: 7px;
+  color: var(--faint);
+  font-size: 13px;
   white-space: nowrap;
 }
 
 .live-dot {
-  width: 9px;
-  height: 9px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: var(--green);
-  box-shadow: 0 0 10px rgba(74, 222, 128, 0.7);
   animation: pulse 1.6s ease-in-out infinite;
 }
 </style>

@@ -4,13 +4,17 @@ import type { AgentStartPayload, EventRow, ToolCallPayload } from './types'
 // One color per event type, shared by the session-card timelines and the phase
 // detail list. gate_fail reads as an error signal on purpose.
 
+// Literal hex, not CSS tokens: these strings are parsed by hexAlpha() and also
+// written straight into inline styles, so a var() reference would break both.
+// Values are mid-lightness so each dot stays legible on the light page surface
+// and the dark one, and each hue stays distinct from its neighbours.
 export const EVENT_DOT_COLORS: Record<string, string> = {
-  agent_start: '#c89bff',
-  tool_call: '#5ad2dd',
-  handoff: '#94a3ff',
-  agent_end: '#4ade80',
-  error: '#ff6f67',
-  gate_fail: '#ff6f67',
+  agent_start: '#8b5cd6',
+  tool_call: '#2e8f9c',
+  handoff: '#4f6ef0',
+  agent_end: '#2a9d63',
+  error: '#c94a42',
+  gate_fail: '#c94a42',
 }
 
 export function dotColor(type: string | null): string | null {
@@ -23,7 +27,10 @@ export function dotColor(type: string | null): string | null {
 // for in-flight agents); the palette below covers dbs written before the
 // color column existed.
 
-export const AGENT_FALLBACK_COLORS = ['#c89bff', '#5ad2dd', '#94a3ff', '#e8b64a', '#f2a2c4']
+// Same constraint as EVENT_DOT_COLORS: literal hex for hexAlpha(). Five clearly
+// separated hues (violet, teal, blue, amber, pink) at a lightness that reads on
+// either theme.
+export const AGENT_FALLBACK_COLORS = ['#8b5cd6', '#2e8f9c', '#4f6ef0', '#c2851a', '#c65a92']
 
 export function agentColor(
   configColor: string | null | undefined,
@@ -34,7 +41,7 @@ export function agentColor(
     configColor ??
     payloadColor ??
     AGENT_FALLBACK_COLORS[index % AGENT_FALLBACK_COLORS.length] ??
-    '#c89bff'
+    '#8b5cd6'
   )
 }
 

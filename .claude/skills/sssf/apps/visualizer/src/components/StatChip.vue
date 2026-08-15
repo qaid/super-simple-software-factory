@@ -22,19 +22,19 @@ const ICONS = {
 // Every chip explains itself on hover. The token numbers in particular are read
 // wrong without one — the headline is billed volume, not distinct tokens.
 const TITLES = {
-  cost: 'Cost — dollars billed for this run, all agents combined.',
+  cost: 'Cost: dollars billed for this run, all agents combined.',
   tokens:
-    'Tokens exchanged (billed) — everything sent or generated, counted once per turn. ' +
+    'Tokens exchanged (billed): everything sent or generated, counted once per turn. ' +
     'Each turn re-sends the whole conversation, so this is far larger than the ' +
     'conversation itself: it is spend, not size. The gap between it and read + ' +
     'written is cached context re-read on later turns.',
-  runtime: 'Duration — wall-clock from the first phase starting to the last one ending.',
+  runtime: 'Duration: wall-clock from the first phase starting to the last one ending.',
   read:
-    'Read — raw tokens the models took in: prompts, file contents and tool results, ' +
+    'Read: raw tokens the models took in: prompts, file contents and tool results, ' +
     'counted the first time they enter the context. Excludes cached re-reads of ' +
     'material already counted here.',
   written:
-    'Written — tokens the models actually generated. Each one produced exactly ' +
+    'Written: tokens the models actually generated. Each one produced exactly ' +
     'once, so this is a true count of output.',
 }
 
@@ -60,7 +60,7 @@ const text = computed(() => {
   padding: 3px 12px;
   border: 1px solid var(--border-soft);
   border-radius: 999px;
-  background: rgba(19, 26, 38, 0.6);
+  background: var(--panel-2);
   font-size: 16px;
   white-space: nowrap;
 }

@@ -25,5 +25,9 @@ export function modelIcon(model: string | null | undefined): string | null {
 /** Keep provider-qualified IDs compact while preserving the full ID in titles. */
 export function modelName(model: string | null | undefined): string {
   if (!model) return ''
-  return model.split('/').filter(Boolean).at(-1) ?? model
+  // Enriched lanes may carry a comma list of routed models; compact each one.
+  return model
+    .split(',')
+    .map((m) => m.split('/').filter(Boolean).at(-1) ?? m)
+    .join(', ')
 }
