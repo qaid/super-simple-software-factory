@@ -263,5 +263,5 @@ export const MISSING_API_FIELDS = [
   'branch / worktree path: to jump from a card to the code',
   'attempt_of: an explicit parent run id, so retries group without matching on title text',
   'CONTRACT BUG: shared/types.ts declares SessionStatus as running|success|fail, but the API returns "failed" too (run d6337127). Both spellings are live; the type lies.',
-  'CONTRACT BUG: run d6337127 has status "failed" with its build phase still "running" and ended_at null. Nothing distinguishes an abandoned run from a clean failure, so the prototype infers a "stalled" state instead.',
+  'CONTRACT BUG: run d6337127 has status "failed" with its build phase still "running" and ended_at null. Nothing distinguishes an abandoned run from a clean failure, so this view infers a "stalled" state instead.',
 ]
