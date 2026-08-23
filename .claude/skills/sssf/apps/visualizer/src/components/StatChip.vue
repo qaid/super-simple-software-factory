@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { BookOpen, CircleDollarSign, Coins, PenLine, Timer } from 'lucide-vue-next'
-import { fmtCost, fmtDuration, fmtTokens } from '../lib/format'
+import { BookOpen, CircleDollarSign, Coins, PenLine, Server, Timer } from 'lucide-vue-next'
+import { fmtCost, fmtDuration, fmtInfraCost, fmtTokens } from '../lib/format'
 
 const props = defineProps<{
-  kind: 'cost' | 'tokens' | 'runtime' | 'read' | 'written'
-  /** Raw value — cost in dollars, tokens as a count, runtime in milliseconds. */
+  kind: 'cost' | 'infra' | 'tokens' | 'runtime' | 'read' | 'written'
+  /**
+   * Raw value — cost in dollars, infra in euros, tokens as a count, runtime in
+   * milliseconds.
+   */
   value: number | null | undefined
   /** Bare value, no pill chrome — for tight spots like waterfall blocks. */
   compact?: boolean
@@ -13,6 +16,7 @@ const props = defineProps<{
 
 const ICONS = {
   cost: CircleDollarSign,
+  infra: Server,
   tokens: Coins,
   runtime: Timer,
   read: BookOpen,
@@ -23,6 +27,13 @@ const ICONS = {
 // wrong without one — the headline is billed volume, not distinct tokens.
 const TITLES = {
   cost: 'Cost: dollars billed for this run, all agents combined.',
+  infra:
+    'Infrastructure: euros of Scaleway compute for this run\'s box, counted only ' +
+    'while it was powered on. Scaleway bills a 60-minute minimum per running ' +
+    'period and most runs finish inside 10 minutes, so this is usually one whole ' +
+    'hour at the list rate. Compute only: block storage and the IP are excluded. ' +
+    'Kept separate from cost: different currency, and the two grow for different ' +
+    'reasons.',
   tokens:
     'Tokens exchanged (billed): everything sent or generated, counted once per turn. ' +
     'Each turn re-sends the whole conversation, so this is far larger than the ' +
@@ -40,6 +51,7 @@ const TITLES = {
 
 const text = computed(() => {
   if (props.kind === 'cost') return fmtCost(props.value)
+  if (props.kind === 'infra') return fmtInfraCost(props.value)
   if (props.kind === 'runtime') return fmtDuration(props.value ?? NaN)
   return fmtTokens(props.value)
 })

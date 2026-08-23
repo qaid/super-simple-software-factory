@@ -58,6 +58,28 @@ export interface Session {
   failure_reason: string | null;
   /** 1 when the run was marked abandoned/stalled rather than a clean pass/fail. */
   abandoned: number | null;
+  /**
+   * Seconds this run's Scaleway instance was POWERED ON, summed over every
+   * running interval. Powering off pauses compute billing and powering on
+   * resumes it, so a run suspended for 13 hours between its PR and its
+   * teardown contributes only the minutes it was actually up.
+   *
+   * Null on dbs predating the enrichment, and on runs whose spawn/teardown
+   * events could not be matched. Null means unknown, never zero.
+   */
+  infra_seconds: number | null;
+  /**
+   * Estimated EUROS of Scaleway compute billed for this run. Not dollars, and
+   * not addable to `total_cost` without a conversion nobody has applied.
+   *
+   * Scaleway bills a 60-minute minimum per uninterrupted running period, and
+   * the median run holds its box under 10 minutes, so this is normally one
+   * whole hour at the rate below rather than a pro-rated figure. Compute only:
+   * block storage and the IP are excluded.
+   */
+  infra_cost: number | null;
+  /** EUR/hour rate `infra_cost` used, so a price change stays auditable. */
+  infra_rate: number | null;
 }
 
 /**

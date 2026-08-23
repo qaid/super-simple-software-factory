@@ -40,6 +40,14 @@ export function fmtCost(n: number | null | undefined): string {
   return n >= 1 ? `$${n.toFixed(2)}` : `$${n.toFixed(4)}`
 }
 
+// Infrastructure cost, in euros. Deliberately its own function rather than a
+// currency argument on fmtCost: model spend is billed in dollars and instance
+// spend in euros, and printing both with one symbol invites adding them.
+export function fmtInfraCost(n: number | null | undefined): string {
+  if (n == null) return '—'
+  return n >= 1 ? `€${n.toFixed(2)}` : `€${n.toFixed(4)}`
+}
+
 // Compact offset label for time axes: 0s, 30s, 1m, 1m30s, 2m, 1h05m.
 export function fmtOffset(ms: number): string {
   const s = Math.round(ms / 1000)

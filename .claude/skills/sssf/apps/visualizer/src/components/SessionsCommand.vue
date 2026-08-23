@@ -12,7 +12,7 @@
 import { computed, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue'
 import type { SessionSummary } from '../lib/types'
 import { fetchSessions } from '../lib/api'
-import { fmtCost, fmtDate, fmtDuration, fmtTokens, ts } from '../lib/format'
+import { fmtCost, fmtDate, fmtDuration, fmtInfraCost, fmtTokens, ts } from '../lib/format'
 import { agentColor } from '../lib/events'
 import { modelName } from '../lib/models'
 import { hrefFor } from '../lib/router'
@@ -187,6 +187,9 @@ const maxPhaseMs = computed(() =>
             <span class="i-meta">
               <span class="i-chip">{{ issueChip(s) }}</span>
               <span>{{ fmtCost(s.total_cost) }}</span>
+              <span class="i-infra" title="Scaleway compute, euros">{{
+                fmtInfraCost(s.infra_cost)
+              }}</span>
               <span>{{ ageLabel(s, nowMs) }}</span>
             </span>
           </span>
@@ -220,6 +223,13 @@ const maxPhaseMs = computed(() =>
               fmtCost(selected.total_cost)
             }}</b>
             <i>cost</i>
+          </span>
+          <!-- Its own stat, never folded into `cost`: different currency, and
+               model spend grows with task difficulty while instance spend grows
+               with run count and with boxes left running. -->
+          <span class="stat">
+            <b>{{ fmtInfraCost(selected.infra_cost) }}</b>
+            <i>infra</i>
           </span>
           <span class="stat">
             <b>{{ fmtDuration(durationMs(selected, nowMs)) }}</b><i>duration</i>

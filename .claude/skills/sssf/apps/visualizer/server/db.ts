@@ -163,7 +163,10 @@ export class SssfDb {
                 ${this.optionalColumn("sessions", "pr_state")},
                 ${this.optionalColumn("sessions", "merged_at")},
                 ${this.optionalColumn("sessions", "failure_reason")},
-                ${this.optionalColumn("sessions", "abandoned")}
+                ${this.optionalColumn("sessions", "abandoned")},
+                ${this.optionalColumn("sessions", "infra_seconds")},
+                ${this.optionalColumn("sessions", "infra_cost")},
+                ${this.optionalColumn("sessions", "infra_rate")}
            FROM sessions
           WHERE COALESCE(${this.hasColumn("sessions", "archived") ? "archived" : "0"}, 0) = 0
           ORDER BY started_at DESC, rowid DESC
@@ -222,7 +225,10 @@ export class SssfDb {
                   ${this.optionalColumn("sessions", "pr_state")},
                   ${this.optionalColumn("sessions", "merged_at")},
                   ${this.optionalColumn("sessions", "failure_reason")},
-                  ${this.optionalColumn("sessions", "abandoned")}
+                  ${this.optionalColumn("sessions", "abandoned")},
+                  ${this.optionalColumn("sessions", "infra_seconds")},
+                  ${this.optionalColumn("sessions", "infra_cost")},
+                  ${this.optionalColumn("sessions", "infra_rate")}
              FROM sessions WHERE adw_id = ?`,
         )
         .get(adwId) ?? null

@@ -439,6 +439,7 @@ function selectPhase(p: Phase) {
       <span class="dim">started {{ fmtDate(session.started_at) }}</span>
       <span class="run-stats">
         <StatChip kind="cost" :value="session.total_cost" />
+        <StatChip kind="infra" :value="session.infra_cost" />
         <StatChip kind="runtime" :value="sessionDurationMs" />
         <StatChip kind="tokens" :value="session.total_tokens" />
         <StatChip kind="read" :value="usage.read" />
