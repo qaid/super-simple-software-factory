@@ -24,6 +24,7 @@ import type {
   Phase,
   Session,
   SessionDetail,
+  SessionStatus,
   SessionSummary,
   SessionUsage,
 } from "../shared/types.ts";
@@ -123,6 +124,99 @@ export class SssfDb {
     return this.hasColumn(table, column) ? column : `NULL AS ${column}`;
   }
 
+  /**
+   * Whether `listener_runs` exists in this db (issue #1837). It is written
+   * only by the Mac-side merge step, into all.db, never into a per-box
+   * sssf.db: so a db predating this feature, or one opened directly on a
+   * box (not through all.db), simply has no such table. `hasColumn` already
+   * tolerates a missing table (PRAGMA table_info of a table that does not
+   * exist returns zero rows, not an error), so reuse it with a column every
+   * real listener_runs row always has.
+   */
+  private hasListenerRuns(): boolean {
+    return this.hasColumn("listener_runs", "issue");
+  }
+
+  /**
+   * Synthetic session rows for issues the listener has dispatched but that
+   * have no real `sessions` row yet: provisioning, staging, held, or a
+   * pre-trace failure (issue #1837 F3). Built from `listener_runs`, which
+   * the live loop upserts every ~20s with no box access required.
+   *
+   * `status` stays inside the real three-value vocabulary
+   * (SessionStatus: running | success | fail) so existing UI components
+   * never see an unrecognized value: any non-terminal factory phase maps to
+   * "running", `failed`/`closed` maps to "fail". The raw factory phase text
+   * (provisioning/staging/building/held/failed) is carried separately in
+   * `live_phase`, gated behind SSSF_LIVE_ROWS=1 per the issue's own
+   * fallback, in case a component chokes on an unfamiliar field rather than
+   * ignoring it.
+   */
+  private syntheticSessions(realIssueNumbers: Set<number>): SessionSummary[] {
+    if (!this.hasListenerRuns()) return [];
+    const showLivePhase = process.env.SSSF_LIVE_ROWS === "1";
+    const rows = this.db
+      .query<
+        {
+          issue: number;
+          phase: string | null;
+          address: string | null;
+          instance_id: string | null;
+          adw_id: string | null;
+          last_event: string | null;
+          last_ts: string | null;
+          held: number | null;
+          updated_at: string | null;
+        },
+        []
+      >("SELECT issue, phase, address, instance_id, adw_id, last_event, last_ts, held, updated_at FROM listener_runs")
+      .all();
+
+    const out: SessionSummary[] = [];
+    for (const row of rows) {
+      // A real sessions row for this issue already exists (matched by
+      // issue_number, the same join key sssf-merge.py uses): prefer it, the
+      // synthetic row would only duplicate the card.
+      if (realIssueNumbers.has(row.issue)) continue;
+      // done/closed with no real session row means the listener finished
+      // but no trace db was ever produced for it (a pre-trace failure);
+      // still worth surfacing, so it is not excluded here.
+      const status: SessionStatus =
+        row.phase === "failed" || row.phase === "closed"
+          ? "fail"
+          : row.phase === "done"
+            ? "success"
+            : "running";
+      out.push({
+        adw_id: row.adw_id || `listener-${row.issue}`,
+        adw_name: null,
+        request: null,
+        status,
+        engineer: null,
+        started_at: row.last_ts ?? row.updated_at,
+        ended_at: null,
+        total_tokens: null,
+        total_cost: null,
+        archived: 0,
+        issue_number: row.issue,
+        pr_number: null,
+        pr_url: null,
+        pr_state: null,
+        merged_at: null,
+        failure_reason: row.held ? "box held for recovery (#1810)" : null,
+        abandoned: 0,
+        infra_seconds: null,
+        infra_cost: null,
+        infra_rate: null,
+        phases: [],
+        phase_count: 0,
+        agents: [],
+        ...(showLivePhase ? { live_phase: row.phase } : {}),
+      } as SessionSummary);
+    }
+    return out;
+  }
+
   close(): void {
     this.writer?.close();
     this.db.close();
@@ -174,7 +268,15 @@ export class SssfDb {
       )
       .all(clamp(limit, 1, MAX_LIMIT));
 
-    if (rows.length === 0) return [];
+    // Real issue numbers, so a synthetic listener_runs row never duplicates
+    // a card that already has a real sessions row (issue #1837).
+    const realIssueNumbers = new Set<number>(
+      rows.map((r) => (r as Session).issue_number).filter((n): n is number => n != null),
+    );
+
+    if (rows.length === 0) {
+      return this.syntheticSessions(realIssueNumbers).slice(0, clamp(limit, 1, MAX_LIMIT));
+    }
 
     // Embed each session's phases so the L1 progress dots cost no extra request.
     const ids = rows.map((row) => row.adw_id);
@@ -209,7 +311,15 @@ export class SssfDb {
         }),
       );
     }
-    return summaries;
+
+    // Synthetic rows for issues the listener has dispatched with no real
+    // session row yet (provisioning/staging/held/pre-trace failure). Newest
+    // first, alongside the real rows, same ordering key (started_at).
+    const synthetic = this.syntheticSessions(realIssueNumbers);
+    const merged = [...summaries, ...synthetic].sort((a, b) =>
+      (b.started_at ?? "").localeCompare(a.started_at ?? ""),
+    );
+    return merged.slice(0, clamp(limit, 1, MAX_LIMIT));
   }
 
   session(adwId: string): Session | null {
